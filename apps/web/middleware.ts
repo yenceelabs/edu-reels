@@ -1,15 +1,16 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-const AUTH_PASSWORD = process.env.AUTH_PASSWORD || 'edureels2024';
 const AUTH_COOKIE = 'edu-reels-auth';
 
 export function middleware(request: NextRequest) {
-  // Skip auth for login page and ALL API routes
-  if (
-    request.nextUrl.pathname === '/login' ||
-    request.nextUrl.pathname.startsWith('/api/')
-  ) {
+  // Skip auth for login page and static assets
+  if (request.nextUrl.pathname === '/login') {
+    return NextResponse.next();
+  }
+
+  // API routes handle their own auth
+  if (request.nextUrl.pathname.startsWith('/api/')) {
     return NextResponse.next();
   }
 

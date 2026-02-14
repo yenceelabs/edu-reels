@@ -1,11 +1,16 @@
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
 
-const AUTH_PASSWORD = process.env.AUTH_PASSWORD || 'edureels2024';
+const AUTH_PASSWORD = process.env.AUTH_PASSWORD;
 const AUTH_COOKIE = 'edu-reels-auth';
 
 export async function POST(request: Request) {
   try {
+    // Require AUTH_PASSWORD to be set
+    if (!AUTH_PASSWORD) {
+      console.error('AUTH_PASSWORD environment variable is not set');
+      return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
+    }
+
     const { password } = await request.json();
 
     if (password === AUTH_PASSWORD) {

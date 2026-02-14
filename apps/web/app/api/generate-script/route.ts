@@ -1,55 +1,39 @@
 import { NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
+import OpenAI from 'openai';
 
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+const AUTH_COOKIE = 'edu-reels-auth';
 
 export async function POST(request: Request) {
   try {
+    // Check authentication
+    const cookieStore = cookies();
+    const authCookie = cookieStore.get(AUTH_COOKIE);
+    
+    if (authCookie?.value !== 'authenticated') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { concept } = await request.json();
 
-    console.log('Generate script called, API key present:', !!OPENAI_API_KEY);
-
     // If no API key, return mock data for demo purposes
-    if (!OPENAI_API_KEY) {
+    if (!process.env.OPENAI_API_KEY) {
       const mockScript = generateMockScript(concept);
       return NextResponse.json({ script: mockScript });
     }
 
+    const openai = new OpenAI();
     const prompt = buildPrompt(concept);
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${OPENAI_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: 'gpt-4.5-preview',
-        messages: [
-          {
-            role: 'system',
-            content: SYSTEM_PROMPT,
-          },
-          {
-            role: 'user',
-            content: prompt,
-          },
-        ],
-        temperature: 0.85,
-        max_tokens: 1500,
-      }),
+    const response = await openai.responses.create({
+      model: 'gpt-5.2',
+      input: `${SYSTEM_PROMPT}\n\n${prompt}`,
+      reasoning: { effort: 'medium' },
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('OpenAI API error:', response.status, errorText);
-      return NextResponse.json(
-        { error: `OpenAI error: ${response.status}`, details: errorText },
-        { status: 500 }
-      );
-    }
-
-    const data = await response.json();
-    const content = data.choices[0]?.message?.content || '';
+    const content = typeof response.output === 'string' 
+      ? response.output 
+      : JSON.stringify(response.output);
 
     // Parse the JSON response
     try {
@@ -74,7 +58,7 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error('Generate script error:', error);
     return NextResponse.json(
-      { error: 'Failed to generate script' },
+      { error: 'Failed to generate script. Please try again.' },
       { status: 500 }
     );
   }
@@ -166,7 +150,7 @@ function buildPrompt(concept: {
   targetAudience?: string;
   keyPoints?: string[];
 }) {
-  const wordsPerSecond = 2.7; // Optimal for reels
+  const wordsPerSecond = 2.7;
   const targetWords = Math.floor(concept.duration * wordsPerSecond);
 
   return `Create a viral educational reel script that will STOP THE SCROLL.
