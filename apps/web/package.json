@@ -19,10 +19,7 @@
     "clsx": "^2.1.0",
     "tailwind-merge": "^2.2.0",
     "lucide-react": "^0.309.0",
-    "zod": "^3.22.0",
-    "@edu-reels/shared": "workspace:*",
-    "@edu-reels/db": "workspace:*",
-    "@edu-reels/remotion": "workspace:*"
+    "zod": "^3.22.0"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",

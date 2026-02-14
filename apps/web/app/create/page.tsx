@@ -25,8 +25,8 @@ import {
   DEFAULT_AVATAR_SETTINGS,
   DEFAULT_VISUAL_SETTINGS,
   estimateWordCount,
-} from '@edu-reels/shared';
-import type { Concept, AvatarMode, ReelStyle, CaptionStyle } from '@edu-reels/shared';
+} from '@/lib/shared';
+import type { Concept, AvatarMode, ReelStyle, CaptionStyle } from '@/lib/shared';
 
 type Step = 'concept' | 'voice' | 'avatar' | 'style' | 'preview';
 
