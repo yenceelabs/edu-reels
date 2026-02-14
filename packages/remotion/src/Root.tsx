@@ -1,42 +1,13 @@
+import React from 'react';
 import { Composition, Folder } from 'remotion';
-import { EduReel } from './compositions/EduReel';
-import { SimpleReel, type SimpleReelProps } from './compositions/SimpleReel';
-import {
-  VIDEO_FPS,
-  VIDEO_WIDTH,
-  VIDEO_HEIGHT,
-  DEFAULT_VOICE_SETTINGS,
-  DEFAULT_AVATAR_SETTINGS,
-  DEFAULT_VISUAL_SETTINGS,
-} from '@edu-reels/shared';
+import { SimpleReel } from './compositions/SimpleReel';
+
+// Inline constants to avoid import issues
+const VIDEO_FPS = 30;
+const VIDEO_WIDTH = 1080;
+const VIDEO_HEIGHT = 1920;
 
 export const Root: React.FC = () => {
-  const defaultReel = {
-    id: 'preview',
-    userId: 'preview',
-    concept: {
-      id: 'preview-concept',
-      topic: 'Sample Educational Reel',
-      duration: 60,
-    },
-    voiceSettings: DEFAULT_VOICE_SETTINGS,
-    avatarSettings: DEFAULT_AVATAR_SETTINGS,
-    visualSettings: DEFAULT_VISUAL_SETTINGS,
-    bRolls: [],
-    status: 'draft' as const,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  };
-
-  const defaultSimpleProps: SimpleReelProps = {
-    audioUrl: '',
-    wordTimestamps: [],
-    duration: 60,
-    captionStyle: 'tiktok_bounce',
-    primaryColor: '#0f0f23',
-    accentColor: '#00ff88',
-  };
-
   return (
     <>
       {/* SimpleReel - Primary composition for rendering */}
@@ -47,75 +18,67 @@ export const Root: React.FC = () => {
         fps={VIDEO_FPS}
         width={VIDEO_WIDTH}
         height={VIDEO_HEIGHT}
-        defaultProps={defaultSimpleProps}
-        calculateMetadata={async ({ props }) => ({
-          durationInFrames: Math.ceil((props.duration || 60) * VIDEO_FPS),
-        })}
-      />
-
-      {/* Main EduReel Composition (full-featured) */}
-      <Composition
-        id="EduReel"
-        component={EduReel}
-        durationInFrames={VIDEO_FPS * 60} // Default 60 seconds
-        fps={VIDEO_FPS}
-        width={VIDEO_WIDTH}
-        height={VIDEO_HEIGHT}
         defaultProps={{
-          reel: defaultReel,
-          fps: VIDEO_FPS,
-          width: VIDEO_WIDTH,
-          height: VIDEO_HEIGHT,
+          audioUrl: '',
+          wordTimestamps: [
+            { word: 'Hello', start: 0, end: 0.5 },
+            { word: 'World', start: 0.5, end: 1 },
+          ],
+          duration: 60,
+          captionStyle: 'tiktok_bounce' as const,
+          primaryColor: '#0f0f23',
+          accentColor: '#00ff88',
         }}
       />
 
-      {/* Preview Compositions */}
-      <Folder name="Previews">
-        {/* 15 second reel */}
+      {/* Duration variants */}
+      <Folder name="Durations">
         <Composition
-          id="EduReel-15s"
-          component={EduReel}
+          id="SimpleReel-15s"
+          component={SimpleReel}
           durationInFrames={VIDEO_FPS * 15}
           fps={VIDEO_FPS}
           width={VIDEO_WIDTH}
           height={VIDEO_HEIGHT}
           defaultProps={{
-            reel: { ...defaultReel, concept: { ...defaultReel.concept, duration: 15 } },
-            fps: VIDEO_FPS,
-            width: VIDEO_WIDTH,
-            height: VIDEO_HEIGHT,
+            audioUrl: '',
+            wordTimestamps: [],
+            duration: 15,
+            captionStyle: 'tiktok_bounce' as const,
+            primaryColor: '#0f0f23',
+            accentColor: '#00ff88',
           }}
         />
-
-        {/* 30 second reel */}
         <Composition
-          id="EduReel-30s"
-          component={EduReel}
+          id="SimpleReel-30s"
+          component={SimpleReel}
           durationInFrames={VIDEO_FPS * 30}
           fps={VIDEO_FPS}
           width={VIDEO_WIDTH}
           height={VIDEO_HEIGHT}
           defaultProps={{
-            reel: { ...defaultReel, concept: { ...defaultReel.concept, duration: 30 } },
-            fps: VIDEO_FPS,
-            width: VIDEO_WIDTH,
-            height: VIDEO_HEIGHT,
+            audioUrl: '',
+            wordTimestamps: [],
+            duration: 30,
+            captionStyle: 'tiktok_bounce' as const,
+            primaryColor: '#0f0f23',
+            accentColor: '#00ff88',
           }}
         />
-
-        {/* 90 second reel */}
         <Composition
-          id="EduReel-90s"
-          component={EduReel}
+          id="SimpleReel-90s"
+          component={SimpleReel}
           durationInFrames={VIDEO_FPS * 90}
           fps={VIDEO_FPS}
           width={VIDEO_WIDTH}
           height={VIDEO_HEIGHT}
           defaultProps={{
-            reel: { ...defaultReel, concept: { ...defaultReel.concept, duration: 90 } },
-            fps: VIDEO_FPS,
-            width: VIDEO_WIDTH,
-            height: VIDEO_HEIGHT,
+            audioUrl: '',
+            wordTimestamps: [],
+            duration: 90,
+            captionStyle: 'tiktok_bounce' as const,
+            primaryColor: '#0f0f23',
+            accentColor: '#00ff88',
           }}
         />
       </Folder>
