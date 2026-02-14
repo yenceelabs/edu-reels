@@ -6,9 +6,11 @@ export async function POST(request: Request) {
   try {
     const { concept } = await request.json();
 
+    console.log('Generate script called, API key present:', !!OPENAI_API_KEY);
+
     if (!OPENAI_API_KEY) {
       return NextResponse.json(
-        { error: 'OpenAI API key not configured' },
+        { error: 'OpenAI API key not configured. Please set OPENAI_API_KEY env var.' },
         { status: 500 }
       );
     }
@@ -42,10 +44,10 @@ Always output valid JSON.`,
     });
 
     if (!response.ok) {
-      const error = await response.text();
-      console.error('OpenAI API error:', error);
+      const errorText = await response.text();
+      console.error('OpenAI API error:', response.status, errorText);
       return NextResponse.json(
-        { error: 'Failed to generate script' },
+        { error: `OpenAI error: ${response.status}`, details: errorText },
         { status: 500 }
       );
     }
