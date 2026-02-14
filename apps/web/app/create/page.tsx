@@ -2,6 +2,12 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { cn } from '@/lib/utils';
 import {
   REEL_DURATIONS,
   ELEVENLABS_VOICES,
@@ -11,6 +17,7 @@ import {
   estimateWordCount,
 } from '@/lib/shared';
 import type { Concept, AvatarMode, ReelStyle, CaptionStyle } from '@/lib/shared';
+import { Zap, ArrowLeft, ArrowRight, Check, Loader2 } from 'lucide-react';
 
 type Step = 'concept' | 'voice' | 'avatar' | 'style' | 'preview';
 
@@ -21,22 +28,6 @@ const STEPS: { id: Step; label: string }[] = [
   { id: 'style', label: 'Style' },
   { id: 'preview', label: 'Preview' },
 ];
-
-const btnBase = "px-4 py-3 rounded-xl font-medium transition-all";
-const btnActive = "text-white";
-const btnInactive = "text-gray-400 hover:text-gray-200";
-const inputStyle = {
-  background: 'rgba(30, 41, 59, 0.5)',
-  border: '1px solid rgba(71, 85, 105, 0.5)',
-};
-const cardStyle = {
-  background: 'rgba(30, 41, 59, 0.3)',
-  border: '1px solid rgba(71, 85, 105, 0.3)',
-};
-const gradientBtn = {
-  background: 'linear-gradient(135deg, #9333ea 0%, #db2777 100%)',
-  boxShadow: '0 10px 30px -10px rgba(168, 85, 247, 0.5)',
-};
 
 export default function CreatePage() {
   const [step, setStep] = useState<Step>('concept');
@@ -54,7 +45,6 @@ export default function CreatePage() {
   const [captionStyle, setCaptionStyle] = useState<CaptionStyle>('tiktok_bounce');
 
   const stepIdx = STEPS.findIndex((s) => s.id === step);
-  const progress = ((stepIdx + 1) / STEPS.length) * 100;
 
   const next = () => stepIdx < STEPS.length - 1 && setStep(STEPS[stepIdx + 1].id);
   const prev = () => stepIdx > 0 && setStep(STEPS[stepIdx - 1].id);
@@ -82,217 +72,220 @@ export default function CreatePage() {
   };
 
   return (
-    <div className="min-h-screen" style={{ background: '#0f172a' }}>
+    <div className="min-h-screen bg-white">
       {/* Header */}
-      <header 
-        className="sticky top-0 z-50 border-b"
-        style={{ background: 'rgba(15, 23, 42, 0.9)', backdropFilter: 'blur(10px)', borderColor: 'rgba(71, 85, 105, 0.3)' }}
-      >
-        <div className="max-w-4xl mx-auto px-4 sm:px-6">
+      <header className="sticky top-0 z-50 border-b border-neutral-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
+        <div className="max-w-3xl mx-auto px-6">
           <div className="h-16 flex items-center justify-between">
-            <Link href="/" className="flex items-center gap-3">
-              <div 
-                className="w-10 h-10 rounded-xl flex items-center justify-center"
-                style={{ background: 'linear-gradient(135deg, #a855f7 0%, #ec4899 100%)' }}
-              >
-                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
+            <Link href="/" className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-neutral-900 flex items-center justify-center">
+                <Zap className="w-4 h-4 text-white" />
               </div>
-              <span className="font-bold text-xl text-white hidden sm:block">EduReels</span>
+              <span className="font-semibold">EduReels</span>
             </Link>
-            <div className="text-sm text-gray-400">
+            <span className="text-sm text-neutral-500">
               {concept.duration || 60}s • ~{estimateWordCount(concept.duration || 60)} words
-            </div>
+            </span>
           </div>
 
           {/* Steps */}
-          <div className="pb-4">
-            <div className="flex gap-2 mb-3 overflow-x-auto">
-              {STEPS.map((s, i) => (
-                <button
-                  key={s.id}
-                  onClick={() => setStep(s.id)}
-                  className={`${btnBase} whitespace-nowrap ${s.id === step ? btnActive : btnInactive}`}
-                  style={s.id === step ? { background: '#a855f7' } : i < stepIdx ? { background: 'rgba(34, 197, 94, 0.2)', color: '#4ade80' } : { background: 'rgba(51, 65, 85, 0.5)' }}
-                >
-                  {i < stepIdx ? '✓ ' : ''}{s.label}
-                </button>
-              ))}
-            </div>
-            <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(51, 65, 85, 0.5)' }}>
-              <div 
-                className="h-full transition-all duration-500"
-                style={{ width: `${progress}%`, background: 'linear-gradient(90deg, #a855f7 0%, #ec4899 100%)' }}
-              />
-            </div>
+          <div className="pb-4 flex items-center gap-2 overflow-x-auto">
+            {STEPS.map((s, i) => (
+              <button
+                key={s.id}
+                onClick={() => setStep(s.id)}
+                className={cn(
+                  "flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors",
+                  s.id === step && "bg-neutral-900 text-white",
+                  s.id !== step && i < stepIdx && "bg-neutral-100 text-neutral-900",
+                  s.id !== step && i >= stepIdx && "text-neutral-400 hover:text-neutral-600"
+                )}
+              >
+                {i < stepIdx && <Check className="w-3.5 h-3.5" />}
+                {s.label}
+              </button>
+            ))}
           </div>
         </div>
       </header>
 
       {/* Main */}
-      <main className="max-w-2xl mx-auto px-4 sm:px-6 py-8 pb-32">
+      <main className="max-w-xl mx-auto px-6 py-10 pb-32">
         {step === 'concept' && (
-          <div className="space-y-6">
+          <div className="space-y-8">
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">What do you want to teach?</h1>
-              <p className="text-gray-400">Enter your concept and AI will generate a viral-ready script.</p>
+              <h1 className="text-2xl font-bold mb-2">What do you want to teach?</h1>
+              <p className="text-neutral-500">Enter your concept and AI will generate a viral-ready script.</p>
             </div>
 
-            <div className="space-y-5">
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Topic / Concept</label>
-                <input
-                  type="text"
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="topic">Topic / Concept</Label>
+                <Input
+                  id="topic"
                   value={concept.topic}
                   onChange={(e) => setConcept({ ...concept, topic: e.target.value })}
                   placeholder="e.g., Why compound interest is the 8th wonder"
-                  className="w-full px-4 py-4 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                  style={inputStyle}
+                  className="h-12"
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Duration</label>
+              <div className="space-y-2">
+                <Label>Duration</Label>
                 <div className="grid grid-cols-4 gap-2">
                   {REEL_DURATIONS.map((d) => (
-                    <button
+                    <Button
                       key={d}
+                      type="button"
+                      variant={concept.duration === d ? "default" : "outline"}
                       onClick={() => setConcept({ ...concept, duration: d })}
-                      className="py-3 rounded-xl font-medium transition-all"
-                      style={concept.duration === d ? { ...gradientBtn, color: 'white' } : { ...inputStyle, color: '#cbd5e1' }}
                     >
                       {d}s
-                    </button>
+                    </Button>
                   ))}
                 </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Tone</label>
+              <div className="space-y-2">
+                <Label>Tone</Label>
                 <div className="grid grid-cols-2 gap-2">
                   {(['educational', 'casual', 'professional', 'entertaining'] as const).map((t) => (
-                    <button
+                    <Button
                       key={t}
+                      type="button"
+                      variant={concept.tone === t ? "default" : "outline"}
                       onClick={() => setConcept({ ...concept, tone: t })}
-                      className="py-3 rounded-xl font-medium capitalize transition-all"
-                      style={concept.tone === t ? { ...gradientBtn, color: 'white' } : { ...inputStyle, color: '#cbd5e1' }}
+                      className="capitalize"
                     >
                       {t}
-                    </button>
+                    </Button>
                   ))}
                 </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Target Audience (optional)</label>
-                <input
-                  type="text"
+              <div className="space-y-2">
+                <Label htmlFor="audience">Target Audience (optional)</Label>
+                <Input
+                  id="audience"
                   value={concept.targetAudience || ''}
                   onChange={(e) => setConcept({ ...concept, targetAudience: e.target.value })}
                   placeholder="e.g., Beginners interested in finance"
-                  className="w-full px-4 py-4 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                  style={inputStyle}
                 />
               </div>
 
-              <button
+              <Button
                 onClick={generateScript}
                 disabled={!concept.topic.trim() || loading}
-                className="w-full py-4 rounded-xl font-semibold text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
-                style={gradientBtn}
+                className="w-full h-12"
               >
-                {loading ? '⏳ Generating...' : '✨ Generate Script with AI'}
-              </button>
+                {loading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  'Generate Script with AI'
+                )}
+              </Button>
 
               {error && (
-                <div className="p-4 rounded-xl text-red-400" style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
+                <div className="p-4 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
                   {error}
                 </div>
               )}
 
               {script && (
-                <div className="p-5 rounded-xl" style={cardStyle}>
-                  <div className="flex items-center justify-between mb-4">
-                    <span className="text-sm font-semibold text-purple-400">✨ Generated Script</span>
-                    <button onClick={() => setScript(null)} className="text-xs text-gray-500 hover:text-gray-300">Clear</button>
-                  </div>
-                  <p className="text-gray-300 whitespace-pre-wrap text-sm leading-relaxed">{script}</p>
-                </div>
+                <Card>
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-base">Generated Script</CardTitle>
+                      <Button variant="ghost" size="sm" onClick={() => setScript(null)}>
+                        Clear
+                      </Button>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-neutral-600 whitespace-pre-wrap leading-relaxed">{script}</p>
+                  </CardContent>
+                </Card>
               )}
             </div>
           </div>
         )}
 
         {step === 'voice' && (
-          <div className="space-y-6">
+          <div className="space-y-8">
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">Choose a Voice</h1>
-              <p className="text-gray-400">Select the voice for your reel narration.</p>
+              <h1 className="text-2xl font-bold mb-2">Choose a Voice</h1>
+              <p className="text-neutral-500">Select the voice for your reel narration.</p>
             </div>
-            <div className="space-y-3">
+            <RadioGroup value={voiceId} onValueChange={setVoiceId} className="space-y-3">
               {ELEVENLABS_VOICES.map((v) => (
-                <button
+                <label
                   key={v.id}
-                  onClick={() => setVoiceId(v.id)}
-                  className="w-full p-5 rounded-xl text-left transition-all flex items-center justify-between"
-                  style={voiceId === v.id ? { background: 'rgba(168, 85, 247, 0.2)', border: '2px solid #a855f7' } : { ...cardStyle, border: '2px solid transparent' }}
+                  className={cn(
+                    "flex items-center justify-between p-4 rounded-lg border cursor-pointer transition-colors",
+                    voiceId === v.id ? "border-neutral-900 bg-neutral-50" : "border-neutral-200 hover:border-neutral-300"
+                  )}
                 >
-                  <div>
-                    <div className="font-semibold text-lg text-white">{v.name}</div>
-                    <div className="text-sm text-gray-400 capitalize">{v.gender} • {v.style}</div>
+                  <div className="flex items-center gap-3">
+                    <RadioGroupItem value={v.id} id={v.id} />
+                    <div>
+                      <div className="font-medium">{v.name}</div>
+                      <div className="text-sm text-neutral-500 capitalize">{v.gender} • {v.style}</div>
+                    </div>
                   </div>
-                  {voiceId === v.id && <span className="text-purple-400">✓</span>}
-                </button>
+                </label>
               ))}
-            </div>
+            </RadioGroup>
           </div>
         )}
 
         {step === 'avatar' && (
-          <div className="space-y-6">
+          <div className="space-y-8">
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">Avatar Settings</h1>
-              <p className="text-gray-400">Choose between face or faceless style.</p>
+              <h1 className="text-2xl font-bold mb-2">Avatar Settings</h1>
+              <p className="text-neutral-500">Choose between face or faceless style.</p>
             </div>
             <div className="grid grid-cols-2 gap-4">
               {[
-                { id: 'faceless' as const, label: 'Faceless', emoji: '🎨', desc: 'Animated visuals' },
-                { id: 'face' as const, label: 'With Face', emoji: '👤', desc: 'AI avatar' },
+                { id: 'faceless' as const, label: 'Faceless', desc: 'Animated visuals only' },
+                { id: 'face' as const, label: 'With Face', desc: 'AI avatar presenter' },
               ].map((m) => (
                 <button
                   key={m.id}
                   onClick={() => setAvatarMode(m.id)}
-                  className="p-6 rounded-xl text-center transition-all"
-                  style={avatarMode === m.id ? { background: 'rgba(168, 85, 247, 0.2)', border: '2px solid #a855f7' } : { ...cardStyle, border: '2px solid transparent' }}
+                  className={cn(
+                    "p-6 rounded-lg border text-left transition-colors",
+                    avatarMode === m.id ? "border-neutral-900 bg-neutral-50" : "border-neutral-200 hover:border-neutral-300"
+                  )}
                 >
-                  <div className="text-4xl mb-2">{m.emoji}</div>
-                  <div className="font-semibold text-white">{m.label}</div>
-                  <div className="text-xs text-gray-400 mt-1">{m.desc}</div>
+                  <div className="font-medium mb-1">{m.label}</div>
+                  <div className="text-sm text-neutral-500">{m.desc}</div>
                 </button>
               ))}
             </div>
             {avatarMode === 'face' && (
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-3">Position</label>
+              <div className="space-y-3">
+                <Label>Position</Label>
                 <div className="grid grid-cols-3 gap-2">
                   {[
-                    { id: 'corner_br', label: 'Bottom R', emoji: '↘️' },
-                    { id: 'corner_bl', label: 'Bottom L', emoji: '↙️' },
-                    { id: 'bottom_third', label: 'Bottom', emoji: '⬇️' },
-                    { id: 'corner_tr', label: 'Top R', emoji: '↗️' },
-                    { id: 'corner_tl', label: 'Top L', emoji: '↖️' },
-                    { id: 'full', label: 'Full', emoji: '🖼️' },
+                    { id: 'corner_br', label: 'Bottom Right' },
+                    { id: 'corner_bl', label: 'Bottom Left' },
+                    { id: 'bottom_third', label: 'Bottom' },
+                    { id: 'corner_tr', label: 'Top Right' },
+                    { id: 'corner_tl', label: 'Top Left' },
+                    { id: 'full', label: 'Full Screen' },
                   ].map((p) => (
-                    <button
+                    <Button
                       key={p.id}
+                      type="button"
+                      variant={avatarPosition === p.id ? "default" : "outline"}
                       onClick={() => setAvatarPosition(p.id)}
-                      className="p-3 rounded-xl text-center transition-all"
-                      style={avatarPosition === p.id ? { background: 'rgba(168, 85, 247, 0.2)', border: '2px solid #a855f7' } : { ...cardStyle, border: '2px solid transparent' }}
+                      className="text-xs"
                     >
-                      <div className="text-xl mb-1">{p.emoji}</div>
-                      <div className="text-xs text-gray-300">{p.label}</div>
-                    </button>
+                      {p.label}
+                    </Button>
                   ))}
                 </div>
               </div>
@@ -301,109 +294,116 @@ export default function CreatePage() {
         )}
 
         {step === 'style' && (
-          <div className="space-y-6">
+          <div className="space-y-8">
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">Visual Style</h1>
-              <p className="text-gray-400">Choose the look and feel.</p>
+              <h1 className="text-2xl font-bold mb-2">Visual Style</h1>
+              <p className="text-neutral-500">Choose the look and feel.</p>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-3">Style Preset</label>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {(Object.keys(STYLE_PRESETS) as ReelStyle[]).map((s) => {
-                  const p = STYLE_PRESETS[s];
-                  return (
-                    <button
-                      key={s}
-                      onClick={() => setVisualStyle(s)}
-                      className="p-3 rounded-xl text-center transition-all"
-                      style={visualStyle === s ? { outline: '2px solid #a855f7', outlineOffset: '2px' } : {}}
-                    >
-                      <div className="h-14 rounded-lg mb-2" style={{ background: `linear-gradient(135deg, ${p.primaryColor}, ${p.secondaryColor})` }} />
-                      <div className="text-sm text-white capitalize">{s.replace('_', ' ')}</div>
-                    </button>
-                  );
-                })}
+            <div className="space-y-6">
+              <div className="space-y-3">
+                <Label>Style Preset</Label>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {(Object.keys(STYLE_PRESETS) as ReelStyle[]).map((s) => {
+                    const p = STYLE_PRESETS[s];
+                    return (
+                      <button
+                        key={s}
+                        onClick={() => setVisualStyle(s)}
+                        className={cn(
+                          "p-3 rounded-lg border text-center transition-colors",
+                          visualStyle === s ? "border-neutral-900" : "border-neutral-200 hover:border-neutral-300"
+                        )}
+                      >
+                        <div 
+                          className="h-12 rounded mb-2" 
+                          style={{ background: `linear-gradient(135deg, ${p.primaryColor}, ${p.secondaryColor})` }} 
+                        />
+                        <div className="text-sm capitalize">{s.replace('_', ' ')}</div>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-3">Caption Style</label>
-              <div className="grid grid-cols-2 gap-3">
-                {[
-                  { id: 'tiktok_bounce', label: 'TikTok Bounce', emoji: '⬆️' },
-                  { id: 'highlight_word', label: 'Highlight', emoji: '🟡' },
-                  { id: 'karaoke', label: 'Karaoke', emoji: '🎤' },
-                  { id: 'subtitle_classic', label: 'Classic', emoji: '📝' },
-                ].map((c) => (
-                  <button
-                    key={c.id}
-                    onClick={() => setCaptionStyle(c.id as CaptionStyle)}
-                    className="p-4 rounded-xl text-center transition-all"
-                    style={captionStyle === c.id ? { background: 'rgba(168, 85, 247, 0.2)', border: '2px solid #a855f7' } : { ...cardStyle, border: '2px solid transparent' }}
-                  >
-                    <div className="text-2xl mb-1">{c.emoji}</div>
-                    <div className="text-sm text-white">{c.label}</div>
-                  </button>
-                ))}
+              <div className="space-y-3">
+                <Label>Caption Style</Label>
+                <div className="grid grid-cols-2 gap-3">
+                  {[
+                    { id: 'tiktok_bounce', label: 'TikTok Bounce' },
+                    { id: 'highlight_word', label: 'Highlight' },
+                    { id: 'karaoke', label: 'Karaoke' },
+                    { id: 'subtitle_classic', label: 'Classic' },
+                  ].map((c) => (
+                    <Button
+                      key={c.id}
+                      type="button"
+                      variant={captionStyle === c.id ? "default" : "outline"}
+                      onClick={() => setCaptionStyle(c.id as CaptionStyle)}
+                    >
+                      {c.label}
+                    </Button>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
         )}
 
         {step === 'preview' && (
-          <div className="space-y-6">
+          <div className="space-y-8">
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">Preview & Generate</h1>
-              <p className="text-gray-400">Review and generate your reel.</p>
+              <h1 className="text-2xl font-bold mb-2">Preview & Generate</h1>
+              <p className="text-neutral-500">Review your settings and generate.</p>
             </div>
-            <div className="p-6 rounded-xl" style={cardStyle}>
-              <h3 className="font-semibold text-lg text-white mb-4">Summary</h3>
-              <div className="space-y-3 text-sm">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Summary</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
                 {[
                   ['Topic', concept.topic || '—'],
                   ['Duration', `${concept.duration}s`],
                   ['Voice', ELEVENLABS_VOICES.find((v) => v.id === voiceId)?.name || voiceId],
-                  ['Avatar', avatarMode],
+                  ['Avatar', avatarMode === 'face' ? `With Face (${avatarPosition.replace('_', ' ')})` : 'Faceless'],
                   ['Style', visualStyle.replace('_', ' ')],
+                  ['Captions', captionStyle.replace('_', ' ')],
                 ].map(([k, v]) => (
-                  <div key={k} className="flex justify-between py-2" style={{ borderBottom: '1px solid rgba(71, 85, 105, 0.3)' }}>
-                    <span className="text-gray-400">{k}</span>
-                    <span className="text-white capitalize">{v}</span>
+                  <div key={k} className="flex justify-between py-2 border-b border-neutral-100 last:border-0">
+                    <span className="text-neutral-500">{k}</span>
+                    <span className="font-medium capitalize">{v}</span>
                   </div>
                 ))}
-              </div>
+              </CardContent>
+            </Card>
+            <div className="p-6 rounded-lg bg-neutral-50 border border-neutral-200 text-center">
+              <Check className="w-8 h-8 mx-auto mb-2 text-neutral-900" />
+              <h3 className="font-semibold">Ready to Generate</h3>
+              <p className="text-sm text-neutral-500 mt-1">Your reel will be ready in about 2 minutes</p>
             </div>
-            <div className="p-6 rounded-xl text-center" style={{ background: 'rgba(34, 197, 94, 0.1)', border: '1px solid rgba(34, 197, 94, 0.2)' }}>
-              <div className="text-4xl mb-2">✅</div>
-              <h3 className="font-semibold text-green-400 text-xl">Ready to Generate!</h3>
-            </div>
-            <button className="w-full py-4 rounded-xl font-semibold text-white transition-all" style={gradientBtn}>
-              🎬 Generate Reel
-            </button>
+            <Button className="w-full h-12">
+              Generate Reel
+            </Button>
           </div>
         )}
       </main>
 
       {/* Footer */}
-      <footer 
-        className="fixed bottom-0 left-0 right-0 p-4 border-t"
-        style={{ background: 'rgba(15, 23, 42, 0.95)', backdropFilter: 'blur(10px)', borderColor: 'rgba(71, 85, 105, 0.3)' }}
-      >
-        <div className="max-w-2xl mx-auto flex items-center justify-between gap-4">
-          <button
+      <footer className="fixed bottom-0 left-0 right-0 p-4 border-t border-neutral-200 bg-white">
+        <div className="max-w-xl mx-auto flex items-center justify-between gap-4">
+          <Button
+            variant="ghost"
             onClick={prev}
             disabled={stepIdx === 0}
-            className="px-4 py-3 text-gray-400 hover:text-white disabled:text-gray-600 disabled:cursor-not-allowed transition-colors"
           >
-            ← Previous
-          </button>
-          <button
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Previous
+          </Button>
+          <Button
             onClick={next}
             disabled={stepIdx === STEPS.length - 1}
-            className="flex-1 sm:flex-none px-8 py-3 rounded-xl font-semibold text-white disabled:opacity-50 transition-all"
-            style={gradientBtn}
           >
-            {stepIdx === STEPS.length - 1 ? 'Generate' : 'Next →'}
-          </button>
+            {stepIdx === STEPS.length - 1 ? 'Generate' : 'Next'}
+            {stepIdx < STEPS.length - 1 && <ArrowRight className="w-4 h-4 ml-2" />}
+          </Button>
         </div>
       </footer>
     </div>
