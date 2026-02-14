@@ -48,6 +48,7 @@ export default function CreatePage() {
   const [script, setScript] = useState<GeneratedScript | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [generationStatus, setGenerationStatus] = useState<string | null>(null);
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const { showToast, ToastComponent } = useToast();
 
   const [concept, setConcept] = useState<Concept>({
@@ -94,11 +95,13 @@ export default function CreatePage() {
 
     setGenerating(true);
     setError(null);
-    setGenerationStatus('Generating script...');
+    setVideoUrl(null);
 
     try {
       // Step 1: Generate script if not already done
-      if (!script) {
+      let currentScript = script;
+      if (!currentScript) {
+        setGenerationStatus('Generating script...');
         const scriptRes = await fetch('/api/generate-script', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -108,30 +111,59 @@ export default function CreatePage() {
         if (!scriptRes.ok) {
           throw new Error(scriptData.error || 'Failed to generate script');
         }
-        setScript(scriptData.script);
+        currentScript = scriptData.script;
+        setScript(currentScript);
       }
 
-      // Step 2: Generate voiceover (simulated for now)
+      // Step 2: Generate voiceover with ElevenLabs
       setGenerationStatus('Generating voiceover...');
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      const voiceRes = await fetch('/api/generate-voice', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          script: currentScript?.fullScript || '',
+          voiceId: voiceId,
+          speed: 1,
+        }),
+      });
+      const voiceData = await voiceRes.json();
+      if (!voiceRes.ok) {
+        throw new Error(voiceData.error || 'Failed to generate voiceover');
+      }
 
-      // Step 3: Generate visuals (simulated for now)
-      setGenerationStatus('Creating visuals...');
-      await new Promise(resolve => setTimeout(resolve, 1500));
-
-      // Step 4: Rendering video (simulated for now)
+      // Step 3: Render video with Remotion
       setGenerationStatus('Rendering video...');
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      const renderRes = await fetch('/api/render-video', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          script: currentScript,
+          voiceAudioUrl: voiceData.audioUrl,
+          wordTimestamps: voiceData.wordTimestamps,
+          duration: voiceData.duration,
+          settings: {
+            voiceId,
+            avatarMode,
+            avatarPosition,
+            visualStyle,
+            captionStyle,
+          },
+        }),
+      });
+      const renderData = await renderRes.json();
+      if (!renderRes.ok) {
+        throw new Error(renderData.error || 'Failed to render video');
+      }
 
       // Complete
-      setGenerationStatus('Complete! Your reel is ready.');
+      setGenerationStatus('Complete!');
+      setVideoUrl(renderData.videoUrl);
       
-      // Show success for a moment then reset
       setTimeout(() => {
         setGenerating(false);
         setGenerationStatus(null);
-        showToast('🎬 Reel generated! Video pipeline coming soon.', 'success');
-      }, 1000);
+        showToast('🎬 Reel generated successfully!', 'success');
+      }, 500);
 
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to generate reel');
@@ -502,7 +534,37 @@ export default function CreatePage() {
               </div>
             )}
 
-            {generating ? (
+            {videoUrl ? (
+              <div className="space-y-4">
+                <div className="aspect-[9/16] max-h-[400px] mx-auto bg-black rounded-lg overflow-hidden">
+                  <video 
+                    src={videoUrl} 
+                    controls 
+                    className="w-full h-full object-contain"
+                    autoPlay
+                    playsInline
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <Button 
+                    variant="outline" 
+                    className="flex-1"
+                    onClick={() => window.open(videoUrl, '_blank')}
+                  >
+                    Download
+                  </Button>
+                  <Button 
+                    className="flex-1"
+                    onClick={() => {
+                      setVideoUrl(null);
+                      showToast('Ready to generate another reel!', 'info');
+                    }}
+                  >
+                    Create Another
+                  </Button>
+                </div>
+              </div>
+            ) : generating ? (
               <div className="p-6 rounded-lg bg-neutral-50 border border-neutral-200 text-center">
                 <Loader2 className="w-8 h-8 mx-auto mb-3 text-neutral-900 animate-spin" />
                 <h3 className="text-sm font-medium">{generationStatus}</h3>
@@ -516,23 +578,25 @@ export default function CreatePage() {
               </div>
             )}
 
-            <Button 
-              className="w-full" 
-              onClick={generateReel}
-              disabled={generating || !concept.topic.trim()}
-            >
-              {generating ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Generating...
-                </>
-              ) : (
-                <>
-                  <Sparkles className="w-4 h-4 mr-2" />
-                  Generate Reel
-                </>
-              )}
-            </Button>
+            {!videoUrl && (
+              <Button 
+                className="w-full" 
+                onClick={generateReel}
+                disabled={generating || !concept.topic.trim()}
+              >
+                {generating ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4 mr-2" />
+                    Generate Reel
+                  </>
+                )}
+              </Button>
+            )}
           </div>
         )}
       </main>
