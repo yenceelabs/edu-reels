@@ -177,7 +177,7 @@ export default function CreatePage() {
           <h1 className="text-lg font-semibold">Create New Reel</h1>
           <div className="flex items-center gap-2 text-sm text-white/60">
             <Clock className="w-4 h-4" />
-            <span>{concept.duration}s • ~{estimateWordCount(concept.duration)} words</span>
+            <span>{concept.duration || 60}s • ~{estimateWordCount(concept.duration || 60)} words</span>
           </div>
         </header>
 
