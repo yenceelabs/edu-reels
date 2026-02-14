@@ -290,7 +290,7 @@ function ConceptStep({
             value={concept.topic}
             onChange={(e) => onChange({ ...concept, topic: e.target.value })}
             placeholder="e.g., Why compound interest is the 8th wonder of the world"
-            className="w-full bg-slate-800 border border-white/10 rounded-xl px-4 py-3 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 outline-none transition-colors"
+            className="w-full bg-slate-800 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-white/40 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 outline-none transition-colors"
           />
         </div>
 
@@ -342,7 +342,7 @@ function ConceptStep({
             value={concept.targetAudience || ''}
             onChange={(e) => onChange({ ...concept, targetAudience: e.target.value })}
             placeholder="e.g., Beginners interested in personal finance"
-            className="w-full bg-slate-800 border border-white/10 rounded-xl px-4 py-3 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 outline-none transition-colors"
+            className="w-full bg-slate-800 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-white/40 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 outline-none transition-colors"
           />
         </div>
 

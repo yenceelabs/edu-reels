@@ -13,6 +13,20 @@ body {
   min-height: 100vh;
 }
 
+/* Form elements - ensure dark theme */
+input,
+textarea,
+select,
+button {
+  color: inherit;
+  background-color: transparent;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
 @layer utilities {
   .text-balance {
     text-wrap: balance;

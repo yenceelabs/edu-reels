@@ -8,11 +8,10 @@ export async function POST(request: Request) {
 
     console.log('Generate script called, API key present:', !!OPENAI_API_KEY);
 
+    // If no API key, return mock data for demo purposes
     if (!OPENAI_API_KEY) {
-      return NextResponse.json(
-        { error: 'OpenAI API key not configured. Please set OPENAI_API_KEY env var.' },
-        { status: 500 }
-      );
+      const mockScript = generateMockScript(concept);
+      return NextResponse.json({ script: mockScript });
     }
 
     const prompt = buildPrompt(concept);
@@ -82,6 +81,31 @@ Always output valid JSON.`,
       { status: 500 }
     );
   }
+}
+
+function generateMockScript(concept: { topic: string; duration: number; tone: string }) {
+  const topic = concept.topic || 'this amazing topic';
+  const duration = concept.duration || 60;
+  
+  return {
+    hook: `Wait... did you know this about ${topic}? Most people get this completely wrong.`,
+    content: [
+      `Here's the thing about ${topic} that nobody talks about...`,
+      `The secret is actually simpler than you think.`,
+      `Once you understand this, everything changes.`,
+    ],
+    callToAction: `Follow for more insights like this! Drop a 🔥 if this blew your mind.`,
+    fullScript: `Wait... did you know this about ${topic}? Most people get this completely wrong.
+
+Here's the thing that nobody talks about. The secret is actually simpler than you think.
+
+Most people overcomplicate ${topic}, but once you understand this core principle, everything changes.
+
+Think about it - when was the last time someone explained it this way?
+
+Follow for more insights like this! Drop a 🔥 if this blew your mind.`,
+    estimatedDuration: duration,
+  };
 }
 
 function buildPrompt(concept: {
