@@ -38,14 +38,10 @@ const STYLE_COLORS: Record<string, { primary: string; accent: string }> = {
 
 export async function POST(request: Request) {
   try {
-    // Skip auth in dev mode
-    let userId = 'dev-user';
-    if (process.env.SKIP_AUTH !== 'true') {
-      const authResult = await auth();
-      if (!authResult.userId) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-      }
-      userId = authResult.userId;
+    // Authenticate with Clerk
+    const { userId } = await auth();
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const body = await request.json();
