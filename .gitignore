@@ -1,11 +1,10 @@
 # Dependencies
 node_modules/
-.pnpm-store/
 
 # Build
-dist/
 .next/
 out/
+dist/
 
 # Environment
 .env
@@ -22,12 +21,5 @@ out/
 # Logs
 *.log
 
-# Turbo
-.turbo/
-
-# Prisma
-*.db
-*.db-journal
-
-# Remotion
-packages/remotion/out/
+# Vercel
+.vercel
