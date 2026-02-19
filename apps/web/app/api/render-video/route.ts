@@ -4,25 +4,25 @@ import { z } from 'zod';
 
 const RenderRequestSchema = z.object({
   script: z.object({
-    hook: z.string().optional(),
-    setup: z.string().optional(),
-    content: z.array(z.string()).optional(),
-    callToAction: z.string().optional(),
-    fullScript: z.string(),
+    hook: z.string().max(1000).optional(),
+    setup: z.string().max(1000).optional(),
+    content: z.array(z.string().max(2000)).max(10).optional(),
+    callToAction: z.string().max(500).optional(),
+    fullScript: z.string().max(10000),
   }),
-  voiceAudioUrl: z.string(),
+  voiceAudioUrl: z.string().url('voiceAudioUrl must be a valid URL (base64 data URIs not accepted)'),
   wordTimestamps: z.array(z.object({
-    word: z.string(),
+    word: z.string().max(100),
     start: z.number(),
     end: z.number(),
-  })),
-  duration: z.number(),
+  })).max(2000, 'Too many word timestamps'),
+  duration: z.number().min(1).max(300),
   settings: z.object({
-    voiceId: z.string(),
+    voiceId: z.string().max(100),
     avatarMode: z.enum(['face', 'faceless']),
-    avatarPosition: z.string().optional(),
-    visualStyle: z.string(),
-    captionStyle: z.string(),
+    avatarPosition: z.string().max(50).optional(),
+    visualStyle: z.string().max(50),
+    captionStyle: z.string().max(50),
   }),
 });
 

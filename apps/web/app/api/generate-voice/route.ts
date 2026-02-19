@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
+import { put } from '@vercel/blob';
 import { z } from 'zod';
 
 const VoiceRequestSchema = z.object({
@@ -29,12 +30,11 @@ export async function POST(request: Request) {
     const { script, voiceId, speed } = parseResult.data;
 
     if (!process.env.ELEVENLABS_API_KEY) {
-      // Mock response for demo
-      return NextResponse.json({
-        audioUrl: '/mock-audio.mp3',
-        duration: Math.ceil(script.split(' ').length / 2.7), // Estimate based on words
-        wordTimestamps: generateMockTimestamps(script),
-      });
+      console.error('[generate-voice] ELEVENLABS_API_KEY not configured');
+      return NextResponse.json(
+        { error: 'Voice generation not configured' },
+        { status: 503 }
+      );
     }
 
     // Generate speech with ElevenLabs
@@ -72,9 +72,14 @@ export async function POST(request: Request) {
     // Extract word timestamps from alignment data
     const wordTimestamps = extractWordTimestamps(data.alignment);
     
-    // Convert audio to base64 data URL (for simplicity - in production, upload to S3/R2)
-    const audioBase64 = data.audio_base64;
-    const audioUrl = `data:audio/mpeg;base64,${audioBase64}`;
+    // Upload audio to Vercel Blob instead of returning inline base64
+    // (base64 inline risks hitting Next.js 4MB response body limit for 60-90s scripts)
+    const audioBuffer = Buffer.from(data.audio_base64, 'base64');
+    const blob = await put(`audio/${userId}-${Date.now()}.mp3`, audioBuffer, {
+      access: 'public',
+      contentType: 'audio/mpeg',
+    });
+    const audioUrl = blob.url;
     
     // Calculate duration from timestamps
     const duration = wordTimestamps.length > 0 

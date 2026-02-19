@@ -33,10 +33,13 @@ export async function POST(request: Request) {
     
     const concept = parseResult.data;
 
-    // If no API key, return mock data for demo purposes
+    // Fail fast if OpenAI not configured — don't silently return mock data
     if (!process.env.OPENAI_API_KEY) {
-      const mockScript = generateMockScript(concept);
-      return NextResponse.json({ script: mockScript });
+      console.error('[generate-script] OPENAI_API_KEY not configured');
+      return NextResponse.json(
+        { error: 'Script generation not configured' },
+        { status: 503 }
+      );
     }
 
     const openai = new OpenAI();
