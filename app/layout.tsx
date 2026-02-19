@@ -8,6 +8,7 @@ import {
   SignedOut,
   UserButton,
 } from '@clerk/nextjs';
+import { PostHogProvider } from './providers';
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -25,7 +26,9 @@ export default function RootLayout({
   return (
     <ClerkProvider>
       <html lang="en">
-        <body className={inter.className}>{children}</body>
+        <body className={inter.className}>
+          <PostHogProvider>{children}</PostHogProvider>
+        </body>
       </html>
     </ClerkProvider>
   );
