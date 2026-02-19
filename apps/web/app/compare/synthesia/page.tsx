@@ -1,6 +1,8 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
-import { COMPARE_PAGES, COMPARE_OG_IMAGE } from '@/lib/compare-pages';
+import { COMPARE_PAGES, getCompareOgImage } from '@/lib/compare-pages';
+
+const OG_IMAGE = getCompareOgImage('Synthesia');
 
 export const metadata: Metadata = {
   title: 'Synthesia Alternative Free — EduReels | AI Educational Video Creator',
@@ -17,7 +19,7 @@ export const metadata: Metadata = {
     type: 'website',
     images: [
       {
-        url: COMPARE_OG_IMAGE,
+        url: OG_IMAGE,
         width: 1200,
         height: 630,
         alt: 'EduReels vs Synthesia — Free AI Educational Videos',
@@ -29,7 +31,7 @@ export const metadata: Metadata = {
     title: 'Synthesia Alternative — EduReels | Free AI Educational Videos',
     description:
       'Synthesia is $22/mo. EduReels is free. Create educational AI videos without the corporate price tag.',
-    images: [COMPARE_OG_IMAGE],
+    images: [OG_IMAGE],
   },
   alternates: {
     canonical: 'https://edu-reels-two.vercel.app/compare/synthesia',
