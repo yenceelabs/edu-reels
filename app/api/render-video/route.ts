@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { z } from 'zod';
+import { renderMediaOnVercel } from '@remotion/vercel';
+import { put } from '@vercel/blob';
 
 const RenderRequestSchema = z.object({
   script: z.object({
@@ -69,22 +71,27 @@ export async function POST(request: Request) {
 
     // Try different rendering backends in order of preference
 
-    // 1. Remotion Lambda (via function URL)
+    // 1. Vercel Sandbox (no AWS, no API key — just Vercel Blob Storage)
+    if (process.env.BLOB_READ_WRITE_TOKEN) {
+      return await renderWithVercelSandbox(renderProps, userId);
+    }
+
+    // 2. Remotion Lambda (via function URL)
     if (process.env.REMOTION_LAMBDA_URL) {
       return await renderWithLambda(renderProps, userId);
     }
 
-    // 2. Remotion Cloud (managed service)
+    // 3. Remotion Cloud (managed service)
     if (process.env.REMOTION_CLOUD_API_KEY) {
       return await renderWithCloud(renderProps, userId);
     }
 
-    // 3. Self-hosted render server
+    // 4. Self-hosted render server
     if (process.env.RENDER_SERVER_URL) {
       return await renderWithServer(renderProps, userId);
     }
 
-    // 4. Demo mode - return explanation + sample video
+    // 5. Demo mode - return explanation + sample video
     return NextResponse.json({
       status: 'demo',
       videoUrl: 'https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
@@ -101,6 +108,32 @@ export async function POST(request: Request) {
       { status: 500 }
     );
   }
+}
+
+// Vercel Sandbox rendering — uses @remotion/vercel + @vercel/blob (no AWS needed)
+async function renderWithVercelSandbox(props: any, userId: string) {
+  const { serveUrl, renderId } = await renderMediaOnVercel({
+    composition: 'EduReel',
+    serveUrl: process.env.REMOTION_SERVE_URL || `${process.env.NEXT_PUBLIC_APP_URL || 'https://edu-reels-two.vercel.app'}/remotion`,
+    inputProps: props,
+    codec: 'h264',
+    outName: `reel-${userId}-${Date.now()}.mp4`,
+    timeoutInMilliseconds: 240000, // 4 min max
+  });
+
+  // Upload rendered video to Vercel Blob for persistent storage
+  const videoBuffer = await fetch(serveUrl).then(r => r.arrayBuffer());
+  const blob = await put(`reels/${userId}/${renderId}.mp4`, videoBuffer, {
+    access: 'public',
+    contentType: 'video/mp4',
+  });
+
+  return NextResponse.json({
+    status: 'completed',
+    videoUrl: blob.url,
+    duration: props.duration,
+    renderId,
+  });
 }
 
 // Remotion Lambda rendering via AWS Lambda invoke (no SDK dependency)
