@@ -1,9 +1,6 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { z } from 'zod';
-import { createSandbox, addBundleToSandbox, renderMediaOnVercel, uploadToVercelBlob } from '@remotion/vercel';
-import { bundle } from '@remotion/bundler';
-import path from 'path';
 
 const RenderRequestSchema = z.object({
   script: z.object({
@@ -112,13 +109,24 @@ export async function POST(request: Request) {
 }
 
 // Vercel Sandbox rendering — uses @remotion/vercel + @vercel/blob (no AWS needed)
+// Note: @remotion/bundler and @remotion/vercel cannot be statically imported in Next.js webpack context.
+// We use dynamic require() to load them at runtime only (Node.js API route, never in browser bundle).
 async function renderWithVercelSandbox(props: any, userId: string) {
   const blobToken = process.env.BLOB_READ_WRITE_TOKEN!;
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://edu-reels-two.vercel.app';
 
-  // 1. Bundle the Remotion composition
-  const bundleDir = await bundle({
+  // Dynamically import to avoid webpack bundling issues
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { createSandbox, addBundleToSandbox, renderMediaOnVercel, uploadToVercelBlob } = require('@remotion/vercel');
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { bundle } = require('@remotion/bundler');
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const path = require('path');
+
+  // 1. Bundle the Remotion composition (at render time, not build time)
+  const bundleDir: string = await bundle({
     entryPoint: path.join(process.cwd(), 'lib/remotion/index.tsx'),
-    webpackOverride: (config) => config,
+    webpackOverride: (config: any) => config,
   });
 
   // 2. Create ephemeral Vercel Sandbox VM
