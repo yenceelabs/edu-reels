@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { z } from 'zod';
+import { checkRateLimit } from '@/lib/rate-limit';
 
 const RenderRequestSchema = z.object({
   script: z.object({
@@ -42,6 +43,23 @@ export async function POST(request: Request) {
     const { userId } = await auth();
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Rate limit: max renders per user per day to prevent unbounded Vercel Sandbox cost.
+    // Default: 3 renders per 24h window. Override via DAILY_RENDER_LIMIT env var.
+    const DAILY_RENDER_LIMIT = parseInt(process.env.DAILY_RENDER_LIMIT || '3', 10);
+    const WINDOW_MS = 24 * 60 * 60 * 1000; // 24 hours
+    const rateCheck = checkRateLimit(`render:${userId}`, DAILY_RENDER_LIMIT, WINDOW_MS);
+
+    if (!rateCheck.allowed) {
+      return NextResponse.json(
+        {
+          error: 'Daily render limit reached. Upgrade for more renders.',
+          limit: DAILY_RENDER_LIMIT,
+          resetAt: new Date(rateCheck.resetAt).toISOString(),
+        },
+        { status: 429 }
+      );
     }
 
     const body = await request.json();
