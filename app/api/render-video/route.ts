@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { z } from 'zod';
-import { renderMediaOnVercel } from '@remotion/vercel';
-import { put } from '@vercel/blob';
+import { createSandbox, addBundleToSandbox, renderMediaOnVercel, uploadToVercelBlob } from '@remotion/vercel';
+import { bundle } from '@remotion/bundler';
+import path from 'path';
 
 const RenderRequestSchema = z.object({
   script: z.object({
@@ -112,25 +113,44 @@ export async function POST(request: Request) {
 
 // Vercel Sandbox rendering — uses @remotion/vercel + @vercel/blob (no AWS needed)
 async function renderWithVercelSandbox(props: any, userId: string) {
-  const { serveUrl, renderId } = await renderMediaOnVercel({
-    composition: 'EduReel',
-    serveUrl: process.env.REMOTION_SERVE_URL || `${process.env.NEXT_PUBLIC_APP_URL || 'https://edu-reels-two.vercel.app'}/remotion`,
+  const blobToken = process.env.BLOB_READ_WRITE_TOKEN!;
+
+  // 1. Bundle the Remotion composition
+  const bundleDir = await bundle({
+    entryPoint: path.join(process.cwd(), 'lib/remotion/index.tsx'),
+    webpackOverride: (config) => config,
+  });
+
+  // 2. Create ephemeral Vercel Sandbox VM
+  const sandbox = await createSandbox();
+
+  // 3. Upload bundle to sandbox
+  await addBundleToSandbox({ sandbox, bundleDir });
+
+  // 4. Render video inside the sandbox
+  const renderId = `reel-${userId}-${Date.now()}`;
+  const { sandboxFilePath, contentType } = await renderMediaOnVercel({
+    sandbox,
+    compositionId: 'EduReel',
     inputProps: props,
     codec: 'h264',
-    outName: `reel-${userId}-${Date.now()}.mp4`,
+    outputFile: `${renderId}.mp4`,
     timeoutInMilliseconds: 240000, // 4 min max
   });
 
-  // Upload rendered video to Vercel Blob for persistent storage
-  const videoBuffer = await fetch(serveUrl).then(r => r.arrayBuffer());
-  const blob = await put(`reels/${userId}/${renderId}.mp4`, videoBuffer, {
+  // 5. Upload rendered video from sandbox to Vercel Blob (persistent)
+  const { url } = await uploadToVercelBlob({
+    sandbox,
+    sandboxFilePath,
+    blobPath: `reels/${userId}/${renderId}.mp4`,
+    contentType,
+    blobToken,
     access: 'public',
-    contentType: 'video/mp4',
   });
 
   return NextResponse.json({
     status: 'completed',
-    videoUrl: blob.url,
+    videoUrl: url,
     duration: props.duration,
     renderId,
   });
