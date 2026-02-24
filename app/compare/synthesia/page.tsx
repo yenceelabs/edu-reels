@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
-import { COMPARE_PAGES, getCompareOgImage } from '@/lib/compare-pages';
+import { COMPARE_PAGES, BASE_URL, getCompareOgImage } from '@/lib/compare-pages';
 
 const OG_IMAGE = getCompareOgImage('Synthesia');
 
@@ -14,7 +14,7 @@ export const metadata: Metadata = {
     title: 'Synthesia Alternative — EduReels | Free AI Educational Videos',
     description:
       'Synthesia is $22/mo. EduReels is free. Create educational AI videos without the corporate price tag.',
-    url: 'https://edu-reels-two.vercel.app/compare/synthesia',
+    url: `${BASE_URL}/compare/synthesia`,
     siteName: 'EduReels',
     type: 'website',
     images: [
@@ -34,7 +34,7 @@ export const metadata: Metadata = {
     images: [OG_IMAGE],
   },
   alternates: {
-    canonical: 'https://edu-reels-two.vercel.app/compare/synthesia',
+    canonical: `${BASE_URL}/compare/synthesia`,
   },
 };
 
@@ -494,13 +494,13 @@ export default function CompareSynthesiaPage() {
                 '@type': 'ListItem',
                 position: 1,
                 name: 'Home',
-                item: 'https://edu-reels-two.vercel.app',
+                item: BASE_URL,
               },
               {
                 '@type': 'ListItem',
                 position: 2,
                 name: 'EduReels vs Synthesia',
-                item: 'https://edu-reels-two.vercel.app/compare/synthesia',
+                item: `${BASE_URL}/compare/synthesia`,
               },
             ],
           }),

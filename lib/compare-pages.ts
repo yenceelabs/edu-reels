@@ -3,7 +3,7 @@ export const COMPARE_PAGES = [
   { href: '/use-case/educators', label: 'For Educators' },
 ] as const;
 
-const BASE_URL = 'https://edu-reels-two.vercel.app';
+export const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://edu-reels-two.vercel.app';
 
 /** Generate a dynamic OG image URL for a compare page */
 export function getCompareOgImage(competitor: string): string {

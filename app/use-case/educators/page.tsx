@@ -1,8 +1,7 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
-import { COMPARE_PAGES } from '@/lib/compare-pages';
+import { COMPARE_PAGES, BASE_URL } from '@/lib/compare-pages';
 
-const BASE_URL = 'https://edu-reels-two.vercel.app';
 const OG_IMAGE = `${BASE_URL}/og?page=use-case&title=AI+Video+Maker+for+Teachers`;
 
 export const metadata: Metadata = {
