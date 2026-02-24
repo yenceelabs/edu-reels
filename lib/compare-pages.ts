@@ -1,5 +1,6 @@
 export const COMPARE_PAGES = [
   { href: '/compare/synthesia', label: 'vs Synthesia' },
+  { href: '/use-case/educators', label: 'For Educators' },
 ] as const;
 
 const BASE_URL = 'https://edu-reels-two.vercel.app';
