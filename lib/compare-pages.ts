@@ -1,5 +1,6 @@
 export const COMPARE_PAGES = [
   { href: '/compare/synthesia', label: 'vs Synthesia' },
+  { href: '/compare/pictory', label: 'vs Pictory' },
   { href: '/use-case/educators', label: 'For Educators' },
 ] as const;
 
