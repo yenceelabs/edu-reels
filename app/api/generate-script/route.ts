@@ -33,27 +33,28 @@ export async function POST(request: Request) {
     
     const concept = parseResult.data;
 
-    // Fail fast if OpenAI not configured — don't silently return mock data
-    if (!process.env.OPENAI_API_KEY) {
-      console.error('[generate-script] OPENAI_API_KEY not configured');
+    const prompt = buildPrompt(concept);
+
+    // Try OpenAI first, fall back to Minimax via OpenRouter
+    let script;
+    if (process.env.OPENAI_API_KEY) {
+      try {
+        script = await generateWithOpenAI(prompt, concept.duration);
+      } catch (err) {
+        console.warn('[generate-script] OpenAI failed, falling back to Minimax:', err);
+        script = await generateWithOpenRouter(prompt, concept.duration);
+      }
+    } else if (process.env.OPENROUTER_API_KEY) {
+      console.log('[generate-script] No OpenAI key, using Minimax via OpenRouter');
+      script = await generateWithOpenRouter(prompt, concept.duration);
+    } else {
+      console.error('[generate-script] No LLM provider configured');
       return NextResponse.json(
-        { error: 'Script generation not configured' },
+        { error: 'Script generation not configured. Set OPENAI_API_KEY or OPENROUTER_API_KEY.' },
         { status: 503 }
       );
     }
 
-    const openai = new OpenAI();
-    const prompt = buildPrompt(concept);
-
-    const response = await openai.responses.create({
-      model: 'gpt-5.2',
-      input: `${SYSTEM_PROMPT}\n\n${prompt}`,
-      reasoning: { effort: 'medium' },
-    });
-
-    // Parse the gpt-5.2 response structure
-    const script = parseGpt52Response(response, concept.duration);
-    
     return NextResponse.json({ script });
   } catch (error) {
     console.error('Generate script error:', error);
@@ -64,7 +65,54 @@ export async function POST(request: Request) {
   }
 }
 
-// Parse the gpt-5.2 Responses API output structure
+// Generate script via OpenAI
+async function generateWithOpenAI(prompt: string, duration: number) {
+  const openai = new OpenAI();
+  const response = await openai.chat.completions.create({
+    model: 'gpt-4o-mini',
+    messages: [
+      { role: 'system', content: SYSTEM_PROMPT },
+      { role: 'user', content: prompt },
+    ],
+    temperature: 0.8,
+    max_tokens: 1500,
+  });
+  const text = response.choices[0]?.message?.content || '';
+  return extractJsonFromText(text, duration);
+}
+
+// Generate script via OpenRouter (Minimax fallback)
+async function generateWithOpenRouter(prompt: string, duration: number) {
+  const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
+      'Content-Type': 'application/json',
+      'HTTP-Referer': 'https://edu-reels-two.vercel.app',
+      'X-Title': 'EduReels',
+    },
+    body: JSON.stringify({
+      model: 'minimax/minimax-01',
+      messages: [
+        { role: 'system', content: SYSTEM_PROMPT },
+        { role: 'user', content: prompt },
+      ],
+      temperature: 0.8,
+      max_tokens: 1500,
+    }),
+  });
+
+  if (!response.ok) {
+    const err = await response.text();
+    throw new Error(`OpenRouter error: ${response.status} ${err}`);
+  }
+
+  const data = await response.json();
+  const text = data.choices?.[0]?.message?.content || '';
+  return extractJsonFromText(text, duration);
+}
+
+// Parse the gpt-5.2 Responses API output structure (legacy, kept for reference)
 function parseGpt52Response(response: any, duration: number) {
   try {
     // response.output is an array with reasoning and message objects
