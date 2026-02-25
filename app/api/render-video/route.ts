@@ -47,9 +47,10 @@ export async function POST(request: Request) {
 
     // Rate limit: max renders per user per day to prevent unbounded Vercel Sandbox cost.
     // Default: 3 renders per 24h window. Override via DAILY_RENDER_LIMIT env var.
+    // Uses Clerk metadata for cross-container persistence (survives cold starts).
     const DAILY_RENDER_LIMIT = parseInt(process.env.DAILY_RENDER_LIMIT || '3', 10);
     const WINDOW_MS = 24 * 60 * 60 * 1000; // 24 hours
-    const rateCheck = checkRateLimit(`render:${userId}`, DAILY_RENDER_LIMIT, WINDOW_MS);
+    const rateCheck = await checkRateLimit(userId, DAILY_RENDER_LIMIT, WINDOW_MS);
 
     if (!rateCheck.allowed) {
       return NextResponse.json(
