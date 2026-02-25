@@ -57,7 +57,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ script });
   } catch (error) {
-    console.error('Generate script error:', error);
+    console.error('Generate script error:', error instanceof Error ? error.message : 'unknown error');
     return NextResponse.json(
       { error: 'Failed to generate script. Please try again.' },
       { status: 500 }
@@ -149,7 +149,7 @@ function parseGpt52Response(response: any, duration: number) {
       estimatedDuration: duration,
     };
   } catch (error) {
-    console.error('Error parsing response:', error);
+    console.error('Error parsing response:', error instanceof Error ? error.message : 'unknown error');
     return {
       hook: '',
       content: [],

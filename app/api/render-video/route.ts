@@ -107,7 +107,7 @@ export async function POST(request: Request) {
       renderProps,
     });
   } catch (error) {
-    console.error('Render video error:', error);
+    console.error('Render video error:', error instanceof Error ? error.message : 'unknown error');
     return NextResponse.json(
       { error: 'Failed to render video' },
       { status: 500 }

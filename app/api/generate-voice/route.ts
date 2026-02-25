@@ -92,7 +92,7 @@ export async function POST(request: Request) {
       wordTimestamps,
     });
   } catch (error) {
-    console.error('Generate voice error:', error);
+    console.error('Generate voice error:', error instanceof Error ? error.message : 'unknown error');
     return NextResponse.json(
       { error: 'Failed to generate voice' },
       { status: 500 }
