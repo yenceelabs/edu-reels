@@ -68,8 +68,31 @@ interface RenderUsage {
 }
 
 /**
+ * Per-user in-memory lock to prevent TOCTOU race on Clerk metadata.
+ * Serializes concurrent requests from the same user within a container.
+ * Cross-container races remain possible but are low-probability on serverless.
+ */
+const pendingLocks = new Map<string, Promise<unknown>>();
+
+async function withUserLock<T>(userId: string, fn: () => Promise<T>): Promise<T> {
+  // Chain onto any existing lock for this user
+  const prev = pendingLocks.get(userId) ?? Promise.resolve();
+  const current = prev.then(fn, fn); // run fn after previous completes (even if it errored)
+  pendingLocks.set(userId, current);
+  try {
+    return await current;
+  } finally {
+    // Clean up if we're still the latest in the chain
+    if (pendingLocks.get(userId) === current) {
+      pendingLocks.delete(userId);
+    }
+  }
+}
+
+/**
  * Persistent rate limit using Clerk user publicMetadata.
  * Tracks render count across all serverless containers.
+ * Uses per-user lock to prevent same-container TOCTOU races.
  *
  * @returns { allowed, remaining, resetAt } or null if Clerk call fails (fail-open to Layer 1)
  */
@@ -78,40 +101,42 @@ export async function checkRateLimitPersistent(
   limit: number,
   windowMs: number
 ): Promise<{ allowed: boolean; remaining: number; resetAt: number } | null> {
-  try {
-    const client = await clerkClient();
-    const user = await client.users.getUser(userId);
-    const meta = (user.publicMetadata || {}) as Record<string, unknown>;
-    const usage = (meta.renderUsage as RenderUsage | undefined) || { count: 0, windowStart: 0 };
-    const now = Date.now();
+  return withUserLock(userId, async () => {
+    try {
+      const client = await clerkClient();
+      const user = await client.users.getUser(userId);
+      const meta = (user.publicMetadata || {}) as Record<string, unknown>;
+      const usage = (meta.renderUsage as RenderUsage | undefined) || { count: 0, windowStart: 0 };
+      const now = Date.now();
 
-    // Window expired — reset
-    if (now - usage.windowStart >= windowMs) {
-      const newUsage: RenderUsage = { count: 1, windowStart: now };
+      // Window expired — reset
+      if (now - usage.windowStart >= windowMs) {
+        const newUsage: RenderUsage = { count: 1, windowStart: now };
+        await client.users.updateUser(userId, {
+          publicMetadata: { ...meta, renderUsage: newUsage },
+        });
+        return { allowed: true, remaining: limit - 1, resetAt: now + windowMs };
+      }
+
+      // Within window — check limit
+      if (usage.count >= limit) {
+        const resetAt = usage.windowStart + windowMs;
+        return { allowed: false, remaining: 0, resetAt };
+      }
+
+      // Increment
+      const newUsage: RenderUsage = { count: usage.count + 1, windowStart: usage.windowStart };
       await client.users.updateUser(userId, {
         publicMetadata: { ...meta, renderUsage: newUsage },
       });
-      return { allowed: true, remaining: limit - 1, resetAt: now + windowMs };
-    }
-
-    // Within window — check limit
-    if (usage.count >= limit) {
       const resetAt = usage.windowStart + windowMs;
-      return { allowed: false, remaining: 0, resetAt };
+      return { allowed: true, remaining: limit - (usage.count + 1), resetAt };
+    } catch (error) {
+      // Fail open — fall back to in-memory only (better than crashing)
+      console.error('Clerk rate limit check failed:', error instanceof Error ? error.message : String(error));
+      return null;
     }
-
-    // Increment
-    const newUsage: RenderUsage = { count: usage.count + 1, windowStart: usage.windowStart };
-    await client.users.updateUser(userId, {
-      publicMetadata: { ...meta, renderUsage: newUsage },
-    });
-    const resetAt = usage.windowStart + windowMs;
-    return { allowed: true, remaining: limit - (usage.count + 1), resetAt };
-  } catch (error) {
-    // Fail open — fall back to in-memory only (better than crashing)
-    console.error('Clerk rate limit check failed:', error instanceof Error ? error.message : String(error));
-    return null;
-  }
+  });
 }
 
 /**

@@ -112,54 +112,6 @@ async function generateWithOpenRouter(prompt: string, duration: number) {
   return extractJsonFromText(text, duration);
 }
 
-// Parse the gpt-5.2 Responses API output structure (legacy, kept for reference)
-function parseGpt52Response(response: any, duration: number) {
-  try {
-    // response.output is an array with reasoning and message objects
-    const output = response.output;
-    
-    // Handle array format from Responses API
-    if (Array.isArray(output)) {
-      // Find the message object
-      const messageObj = output.find((item: any) => item.type === 'message');
-      if (messageObj?.content?.[0]?.text) {
-        const text = messageObj.content[0].text;
-        return extractJsonFromText(text, duration);
-      }
-    }
-    
-    // Handle string output
-    if (typeof output === 'string') {
-      return extractJsonFromText(output, duration);
-    }
-    
-    // Handle direct object output
-    if (typeof output === 'object' && output !== null) {
-      if (output.fullScript || output.hook) {
-        return output;
-      }
-    }
-
-    // Fallback
-    return {
-      hook: '',
-      content: [],
-      callToAction: '',
-      fullScript: typeof output === 'string' ? output : JSON.stringify(output),
-      estimatedDuration: duration,
-    };
-  } catch (error) {
-    console.error('Error parsing response:', error instanceof Error ? error.message : 'unknown error');
-    return {
-      hook: '',
-      content: [],
-      callToAction: '',
-      fullScript: 'Error parsing response',
-      estimatedDuration: duration,
-    };
-  }
-}
-
 // Extract JSON from text that might have markdown code blocks
 function extractJsonFromText(text: string, duration: number) {
   // Remove markdown code blocks
@@ -249,34 +201,6 @@ PACING (for voiceover):
 CRITICAL: Output ONLY valid JSON with no markdown formatting. No \`\`\`json blocks. Just the raw JSON object.
 
 The fullScript should read naturally when spoken aloud - no stage directions, just pure spoken words.`;
-
-function generateMockScript(concept: z.infer<typeof ConceptSchema>) {
-  const topic = concept.topic || 'this amazing topic';
-  const duration = concept.duration || 60;
-  
-  return {
-    hook: `Stop scrolling. What I'm about to tell you about ${topic} is going to change everything.`,
-    setup: `I spent 3 years getting this wrong. Then I discovered something that the experts don't want you to know.`,
-    content: [
-      `First - forget everything you've heard about ${topic}. Most of it is outdated.`,
-      `Here's the real secret: it's not about working harder, it's about this one shift.`,
-      `The people who get this? They're miles ahead. The ones who don't? Still stuck.`,
-    ],
-    callToAction: `Save this before it gets buried. Follow for part 2 where I show you exactly how to do it.`,
-    fullScript: `Stop scrolling. What I'm about to tell you about ${topic} is going to change everything.
-
-I spent 3 years getting this wrong. Then I discovered something that the experts don't want you to know.
-
-First - forget everything you've heard about ${topic}. Most of it is outdated.
-
-Here's the real secret: it's not about working harder, it's about this one shift in how you think about it.
-
-The people who get this? They're miles ahead. The ones who don't? Still stuck in the same place wondering why nothing works.
-
-Save this before it gets buried. Follow for part 2 where I show you exactly how to do it.`,
-    estimatedDuration: duration,
-  };
-}
 
 function buildPrompt(concept: z.infer<typeof ConceptSchema>) {
   const wordsPerSecond = 2.7;

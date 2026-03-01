@@ -143,19 +143,3 @@ function extractWordTimestamps(alignment: any): Array<{ word: string; start: num
   return timestamps;
 }
 
-function generateMockTimestamps(script: string): Array<{ word: string; start: number; end: number }> {
-  const words = script.split(/\s+/).filter(w => w.length > 0);
-  const avgWordDuration = 0.35; // ~170 wpm
-  let currentTime = 0;
-
-  return words.map(word => {
-    const start = currentTime;
-    const duration = avgWordDuration * (0.8 + Math.random() * 0.4); // Some variation
-    currentTime += duration;
-    return {
-      word: word.replace(/[^\w']/g, ''),
-      start,
-      end: currentTime,
-    };
-  });
-}
