@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
+import { del } from '@vercel/blob';
 import { z } from 'zod';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { requireEnv } from '@/lib/env';
@@ -91,12 +92,17 @@ export async function POST(request: Request) {
 
     // 1. Vercel Sandbox (no AWS, no API key — just Vercel Blob Storage)
     if (process.env.BLOB_READ_WRITE_TOKEN) {
-      return await renderWithVercelSandbox(renderProps, userId);
+      const result = await renderWithVercelSandbox(renderProps, userId);
+      // Cleanup: delete intermediate audio blob now that render is complete
+      cleanupBlob(voiceAudioUrl);
+      return result;
     }
 
     // 2. Self-hosted render server
     if (process.env.RENDER_SERVER_URL) {
-      return await renderWithServer(renderProps, userId);
+      const result = await renderWithServer(renderProps, userId);
+      cleanupBlob(voiceAudioUrl);
+      return result;
     }
 
     // 3. Demo mode - BLOB_READ_WRITE_TOKEN not configured
@@ -115,6 +121,13 @@ export async function POST(request: Request) {
       { status: 500 }
     );
   }
+}
+
+/** Fire-and-forget blob deletion — failure is logged, never blocks the response */
+function cleanupBlob(url: string) {
+  del(url).catch((err) => {
+    console.warn('Blob cleanup failed (non-fatal):', err instanceof Error ? err.message : 'unknown');
+  });
 }
 
 // Vercel Sandbox rendering — uses @remotion/vercel + @vercel/blob (no AWS needed)
