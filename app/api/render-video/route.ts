@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { z } from 'zod';
 import { checkRateLimit } from '@/lib/rate-limit';
+import { requireEnv } from '@/lib/env';
 
 const RenderRequestSchema = z.object({
   script: z.object({
@@ -174,11 +175,14 @@ async function renderWithVercelSandbox(props: any, userId: string) {
 
 // Self-hosted render server
 async function renderWithServer(props: any, userId: string) {
-  const response = await fetch(`${process.env.RENDER_SERVER_URL}/render`, {
+  const renderServerUrl = requireEnv('RENDER_SERVER_URL');
+  const renderServerSecret = requireEnv('RENDER_SERVER_SECRET');
+
+  const response = await fetch(`${renderServerUrl}/render`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${process.env.RENDER_SERVER_SECRET || ''}`,
+      'Authorization': `Bearer ${renderServerSecret}`,
     },
     body: JSON.stringify({
       composition: 'SimpleReel',
