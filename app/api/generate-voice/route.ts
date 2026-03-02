@@ -2,10 +2,11 @@ import { NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { put } from '@vercel/blob';
 import { z } from 'zod';
+import { ELEVENLABS_VOICES } from '@/lib/shared/constants';
 
 const VoiceRequestSchema = z.object({
   script: z.string().min(1).max(5000),
-  voiceId: z.string().default('21m00Tcm4TlvDq8ikWAM'), // Rachel - default
+  voiceId: z.string().default(ELEVENLABS_VOICES[0].id), // Sarah — first in curated list
   speed: z.number().min(0.5).max(2).default(1),
 });
 

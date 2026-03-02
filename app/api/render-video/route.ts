@@ -122,7 +122,6 @@ export async function POST(request: Request) {
 // We use dynamic require() to load them at runtime only (Node.js API route, never in browser bundle).
 async function renderWithVercelSandbox(props: any, userId: string) {
   const blobToken = process.env.BLOB_READ_WRITE_TOKEN!;
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://edu-reels-two.vercel.app';
 
   // Dynamically import to avoid webpack bundling issues
   // eslint-disable-next-line @typescript-eslint/no-require-imports
