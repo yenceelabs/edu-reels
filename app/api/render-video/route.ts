@@ -120,8 +120,17 @@ export async function POST(request: Request) {
 // Vercel Sandbox rendering — uses @remotion/vercel + @vercel/blob (no AWS needed)
 // Note: @remotion/bundler and @remotion/vercel cannot be statically imported in Next.js webpack context.
 // We use dynamic require() to load them at runtime only (Node.js API route, never in browser bundle).
-async function renderWithVercelSandbox(props: any, userId: string) {
-  const blobToken = process.env.BLOB_READ_WRITE_TOKEN!;
+interface RenderProps {
+  audioUrl: string;
+  wordTimestamps: Array<{ word: string; start: number; end: number }>;
+  duration: number;
+  captionStyle: 'tiktok_bounce' | 'highlight_word' | 'subtitle_classic';
+  primaryColor: string;
+  accentColor: string;
+}
+
+async function renderWithVercelSandbox(props: RenderProps, userId: string) {
+  const blobToken = requireEnv('BLOB_READ_WRITE_TOKEN');
 
   // Dynamically import to avoid webpack bundling issues
   // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -173,7 +182,7 @@ async function renderWithVercelSandbox(props: any, userId: string) {
 }
 
 // Self-hosted render server
-async function renderWithServer(props: any, userId: string) {
+async function renderWithServer(props: RenderProps, userId: string) {
   const renderServerUrl = requireEnv('RENDER_SERVER_URL');
   const renderServerSecret = requireEnv('RENDER_SERVER_SECRET');
 

@@ -101,7 +101,13 @@ export async function POST(request: Request) {
   }
 }
 
-function extractWordTimestamps(alignment: any): Array<{ word: string; start: number; end: number }> {
+interface ElevenLabsAlignment {
+  characters: string[];
+  character_start_times_seconds: number[];
+  character_end_times_seconds: number[];
+}
+
+function extractWordTimestamps(alignment: ElevenLabsAlignment | null | undefined): Array<{ word: string; start: number; end: number }> {
   if (!alignment?.characters) return [];
   
   const timestamps: Array<{ word: string; start: number; end: number }> = [];
