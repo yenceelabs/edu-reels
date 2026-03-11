@@ -104,7 +104,7 @@ async function generateWithOpenRouter(prompt: string, duration: number) {
 
   if (!response.ok) {
     const err = await response.text();
-    throw new Error(`OpenRouter error: ${response.status} ${err}`);
+    throw new Error(`OpenRouter error: ${response.status} — ${err.slice(0, 200)}`);
   }
 
   const data = await response.json();
