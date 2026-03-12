@@ -4,9 +4,11 @@ import { put } from '@vercel/blob';
 import { z } from 'zod';
 import { ELEVENLABS_VOICES } from '@/lib/shared/constants';
 
+const VALID_VOICE_IDS = ELEVENLABS_VOICES.map(v => v.id) as [string, ...string[]];
+
 const VoiceRequestSchema = z.object({
   script: z.string().min(1).max(5000),
-  voiceId: z.string().default(ELEVENLABS_VOICES[0].id), // Sarah — first in curated list
+  voiceId: z.enum(VALID_VOICE_IDS).default(ELEVENLABS_VOICES[0].id), // Sarah — first in curated list
   speed: z.number().min(0.5).max(2).default(1),
 });
 
