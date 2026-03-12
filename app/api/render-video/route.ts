@@ -47,6 +47,17 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Validate input FIRST (cheap, no side effects) before consuming rate-limit credit
+    const body = await request.json();
+    const parseResult = RenderRequestSchema.safeParse(body);
+    
+    if (!parseResult.success) {
+      return NextResponse.json(
+        { error: 'Invalid input', details: parseResult.error.flatten().fieldErrors },
+        { status: 400 }
+      );
+    }
+
     // Rate limit: max renders per user per day to prevent unbounded Vercel Sandbox cost.
     // Default: 3 renders per 24h window. Override via DAILY_RENDER_LIMIT env var.
     // Uses Clerk metadata for cross-container persistence (survives cold starts).
@@ -62,16 +73,6 @@ export async function POST(request: Request) {
           resetAt: new Date(rateCheck.resetAt).toISOString(),
         },
         { status: 429 }
-      );
-    }
-
-    const body = await request.json();
-    const parseResult = RenderRequestSchema.safeParse(body);
-    
-    if (!parseResult.success) {
-      return NextResponse.json(
-        { error: 'Invalid input', details: parseResult.error.flatten().fieldErrors },
-        { status: 400 }
       );
     }
 

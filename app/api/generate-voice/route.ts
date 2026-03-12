@@ -3,6 +3,7 @@ import { auth } from '@clerk/nextjs/server';
 import { put } from '@vercel/blob';
 import { z } from 'zod';
 import { ELEVENLABS_VOICES } from '@/lib/shared/constants';
+import { requireEnv } from '@/lib/env';
 
 const VALID_VOICE_IDS = ELEVENLABS_VOICES.map(v => v.id) as [string, ...string[]];
 
@@ -32,13 +33,7 @@ export async function POST(request: Request) {
 
     const { script, voiceId, speed } = parseResult.data;
 
-    if (!process.env.ELEVENLABS_API_KEY) {
-      console.error('[generate-voice] ELEVENLABS_API_KEY not configured');
-      return NextResponse.json(
-        { error: 'Voice generation not configured' },
-        { status: 503 }
-      );
-    }
+    const elevenLabsKey = requireEnv('ELEVENLABS_API_KEY');
 
     // Generate speech with ElevenLabs
     const audioResponse = await fetch(
@@ -47,7 +42,7 @@ export async function POST(request: Request) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'xi-api-key': process.env.ELEVENLABS_API_KEY,
+          'xi-api-key': elevenLabsKey,
         },
         body: JSON.stringify({
           text: script,
